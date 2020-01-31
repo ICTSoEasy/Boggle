@@ -1,4 +1,4 @@
-from tkinter import Tk,Label,font,Button,RAISED,SUNKEN
+from tkinter import Tk,Label,font,Button,RAISED,SUNKEN,Listbox,END,Scrollbar,RIGHT,Y
 from functools import partial
 
 from BoggleDice import BoggleDice
@@ -9,6 +9,7 @@ class BoggleBoard:
       self.last_i = [None]
       self.last_j = [None]
       self.word = ''
+      self.words = []
       #Constants used in the interface
       TITLE="Boggle"
       BTN_WIDTH=5
@@ -25,19 +26,26 @@ class BoggleBoard:
       #Create window+title
       self.screen=screen
       screen.title(TITLE)
+      #Shuffle (and will be reset) button
       self.btn_shuffle = Button(screen,text='Shuffle Board',width=BTN_WIDTH*4,height=BTN_HEIGHT,font=LETTER_FONT)
       self.btn_shuffle.grid(row=0,column=0,columnspan=4)
       self.btn_shuffle.configure(command=self.shuffle_board)
       #Create the 'word' label
       self.label_word = Label(screen,text='',width=BTN_WIDTH*4,height=BTN_HEIGHT,font=LETTER_FONT)
       self.label_word.grid(row=1,column=0,columnspan=4)
+      #Create the listbox of words
+      self.lbox_words = Listbox(screen,height=16)
+      self.lbox_words.grid(row=0,column=4,rowspan=7)
       #Create the letter buttons (4x4 grid)
       for i in range(4):
         for j in range(4):
           self.buttons[i][j] = Button(screen,text='_',width=BTN_WIDTH,height=BTN_HEIGHT,font=LETTER_FONT)
           self.buttons[i][j].grid(row=i+2,column=j)
           self.buttons[i][j].configure(command=partial(self.letter_click,i,j))
-        
+      self.btn_add = Button(screen,text="Add",width=BTN_WIDTH*2,height=BTN_HEIGHT,font=LETTER_FONT)
+      self.btn_add.grid(row=6,column=0,columnspan=2)
+      self.btn_add.configure(command=self.add_word)
+
   def letter_click(self,i,j):
     #Was this the last button clicked and is down?
     if i == self.last_i[-1] and j == self.last_j[-1] and self.buttons[i][j].cget('highlightbackground') == self.HIGHLIGHTED_COL:
@@ -79,3 +87,16 @@ class BoggleBoard:
         self.letters[i][j] = self.dice.getLetter(i,j)
         self.buttons[i][j].configure(text=self.letters[i][j])
     print(self.letters)
+
+  def add_word(self):
+    #Add the word to the list
+    self.lbox_words.insert(END,self.word)
+    self.words.append(self.word)
+    #Reset the board
+    self.last_i = [None]
+    self.last_j = [None]
+    self.word = ''
+    self.label_word.configure(text=self.word)
+    for i in range(4):
+      for j in range(4):
+        self.buttons[i][j].configure(highlightbackground=self.UNHIGHLIGHTED_COL)

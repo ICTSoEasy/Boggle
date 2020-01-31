@@ -1,5 +1,6 @@
 from tkinter import Tk,Label,font,Button,RAISED,SUNKEN,Listbox,END,Scrollbar,RIGHT,Y
 from functools import partial
+import time
 
 from BoggleDice import BoggleDice
 
@@ -8,6 +9,8 @@ class BoggleBoard:
       #Variables used to keep track
       self.last_i = [None]
       self.last_j = [None]
+      self.starttime = time.time()
+      self.active = False
       self.word = ''
       self.words = []
       #Constants used in the interface
@@ -15,6 +18,7 @@ class BoggleBoard:
       BTN_WIDTH=5
       BTN_HEIGHT=2
       LETTER_FONT=font.Font(family='arial',size=16)
+      self.TIMERSECONDS = 180
       self.HIGHLIGHTED_COL='#3E4149'
       self.UNHIGHLIGHTED_COL='White'
       #list of buttons for letters,and the letters themselves
@@ -42,9 +46,13 @@ class BoggleBoard:
           self.buttons[i][j] = Button(screen,text='_',width=BTN_WIDTH,height=BTN_HEIGHT,font=LETTER_FONT)
           self.buttons[i][j].grid(row=i+2,column=j)
           self.buttons[i][j].configure(command=partial(self.letter_click,i,j))
+      #Create the add button
       self.btn_add = Button(screen,text="Add",width=BTN_WIDTH*2,height=BTN_HEIGHT,font=LETTER_FONT)
       self.btn_add.grid(row=6,column=0,columnspan=2)
       self.btn_add.configure(command=self.add_word)
+      #Create the timer label
+      self.label_timer = Label(screen,text='180',width=BTN_WIDTH*2,height=BTN_HEIGHT,font=LETTER_FONT)
+      self.label_timer.grid(row=6,column=2,columnspan=2)
 
   def letter_click(self,i,j):
     #Was this the last button clicked and is down?
@@ -87,6 +95,9 @@ class BoggleBoard:
         self.letters[i][j] = self.dice.getLetter(i,j)
         self.buttons[i][j].configure(text=self.letters[i][j])
     print(self.letters)
+    self.starttime = time.time()
+    self.active = True
+
 
   def add_word(self):
     #Add the word to the list
@@ -100,3 +111,15 @@ class BoggleBoard:
     for i in range(4):
       for j in range(4):
         self.buttons[i][j].configure(highlightbackground=self.UNHIGHLIGHTED_COL)
+
+  def clock(self,tk):
+    if self.active:
+      t = time.time()
+      start = self.starttime
+      diff = int(self.TIMERSECONDS-((t-start) // 1))
+      if diff < 0:
+        self.label_timer.config(text='TIME UP!')
+        self.active = False
+      else:
+        self.label_timer.config(text=diff)
+    tk.after(100,self.clock,tk)

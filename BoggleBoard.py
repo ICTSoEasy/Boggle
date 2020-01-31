@@ -18,9 +18,10 @@ class BoggleBoard:
       BTN_WIDTH=5
       BTN_HEIGHT=2
       LETTER_FONT=font.Font(family='arial',size=16)
-      self.TIMERSECONDS = 180
+      self.TIMERSECONDS = 18
       self.HIGHLIGHTED_COL='#3E4149'
       self.UNHIGHLIGHTED_COL='White'
+      self.WORDSFILE = 'words.txt'
       #list of buttons for letters,and the letters themselves
       self.buttons = [[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None]]
       self.letters = [[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None]]
@@ -55,6 +56,9 @@ class BoggleBoard:
       self.label_timer.grid(row=6,column=2,columnspan=2)
 
   def letter_click(self,i,j):
+    #Only work while the game is running
+    if not self.active:
+      return
     #Was this the last button clicked and is down?
     if i == self.last_i[-1] and j == self.last_j[-1] and self.buttons[i][j].cget('highlightbackground') == self.HIGHLIGHTED_COL:
       #so unighlight it
@@ -87,17 +91,18 @@ class BoggleBoard:
     else:
       #print('unclickable')
       pass
-    print('Word:',self.word)
+    #print('Word:',self.word)
 
   def shuffle_board(self):
     for i in range(4):
       for j in range(4):
         self.letters[i][j] = self.dice.getLetter(i,j)
         self.buttons[i][j].configure(text=self.letters[i][j])
-    print(self.letters)
+    #print(self.letters)
+    self.words = []
+    self.lbox_words.delete(0,END)
     self.starttime = time.time()
     self.active = True
-
 
   def add_word(self):
     #Add the word to the list
@@ -120,6 +125,45 @@ class BoggleBoard:
       if diff < 0:
         self.label_timer.config(text='TIME UP!')
         self.active = False
+        self.gameover()
       else:
         self.label_timer.config(text=diff)
     tk.after(100,self.clock,tk)
+
+  def gameover(self):
+    points = 0
+    try:
+      with open(self.WORDSFILE,"r") as allwords:
+        ok_words = allwords.read().splitlines()
+    except:
+      print("Sorry, I couldn't find the file!")
+      raise SystemExit
+    for word in self.words:
+      print(word,end=' - ')
+      if word in ok_words:
+        print('OK!',end=' - ')
+        if len(word) < 3:
+          print('3 chars - 0 points',end=' - ')
+        elif len(word) == 3:
+          print('3 chars - 1 point',end=' - ')
+          points += 1
+        elif len(word) == 4:
+          print('4 chars - 1 point',end=' - ')
+          points += 1
+        elif len(word) == 5:
+          print('5 chars - 2 points',end=' - ')
+          points += 2
+        elif len(word) == 6:
+          print('6 chars - 3 points',end=' - ')
+          points += 3
+        elif len(word) == 7:
+          print('7 chars - 4 points',end=' - ')
+          points += 4
+        else:
+          print('8 or more chars - 11 points',end=' - ')
+          points += 11
+      else:
+        print('NOT FOUND!',end=' - ')
+        print('-1 point!',end=' - ')
+        points -= 1
+      print(points,'Points so far.')
